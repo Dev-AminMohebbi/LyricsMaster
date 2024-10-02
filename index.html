@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LyricsMaster Ultra</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a4e69;
+            --secondary-color: #9a8c98;
+            --background-color: #22223b;
+            --surface-color: #4a4e69;
+            --on-surface-color: #f2e9e4;
+            --accent-color: #c9ada7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--on-surface-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        input {
+            flex: 1;
+            padding: 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 50px;
+            background-color: var(--surface-color);
+            color: var(--on-surface-color);
+        }
+
+        button {
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 50px;
+            background-color: var(--accent-color);
+            color: var(--background-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: var(--on-surface-color);
+        }
+
+        #lyrics-container {
+            background-color: var(--surface-color);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        #lyrics {
+            white-space: pre-wrap;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        #loading {
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 2rem 0;
+            display: none;
+        }
+
+        .feature-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .feature-buttons button {
+            background-color: var(--secondary-color);
+        }
+
+        #error {
+            color: #ff6b6b;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .visualizer {
+            height: 150px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 2rem;
+        }
+
+        .bar {
+            width: 10px;
+            background-color: var(--accent-color);
+            transition: height 0.2s ease;
+        }
+
+        #song-info {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        #artist-name, #song-title {
+            font-size: 1.2rem;
+            color: var(--accent-color);
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            margin-top: auto;
+            background-color: var(--surface-color);
+        }
+
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+
+            input, button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-music"></i> LyricsMaster Ultra</h1>
+        </header>
+        <div class="visualizer">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
+        <div class="search-container">
+            <input type="text" id="artist" placeholder="Artist name" />
+            <input type="text" id="title" placeholder="Song title" />
+            <button onclick="fetchLyrics()"><i class="fas fa-search"></i> Search</button>
+        </div>
+
+        <div id="loading"><i class="fas fa-spinner fa-spin"></i> Searching for lyrics...</div>
+        <div id="error"></div>
+        <div id="song-info">
+            <span id="artist-name"></span> - <span id="song-title"></span>
+        </div>
+        <div id="lyrics-container">
+            <div id="lyrics"></div>
+        </div>
+
+        <div class="feature-buttons">
+            <button onclick="copyLyrics()"><i class="fas fa-copy"></i> Copy</button>
+            <button onclick="shareLyrics()"><i class="fas fa-share-alt"></i> Share</button>
+            <button onclick="playMusic()"><i class="fas fa-play"></i> Play on YouTube</button>
+            <button onclick="searchAlbum()"><i class="fas fa-compact-disc"></i> Search Album</button>
+            <button onclick="findConcerts()"><i class="fas fa-ticket-alt"></i> Find Concerts</button>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2023 LyricsMaster Ultra. All rights reserved.
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script>
+        const visualizer = document.querySelector('.visualizer');
+        const bars = visualizer.querySelectorAll('.bar');
+
+        function animateVisualizer() {
+            bars.forEach(bar => {
+                const height = Math.random() * 100 + 50;
+                bar.style.height = `${height}px`;
+            });
+        }
+
+        setInterval(animateVisualizer, 200);
+
+        async function fetchLyrics() {
+            const artist = document.getElementById('artist').value;
+            const title = document.getElementById('title').value;
+            const lyricsContainer = document.getElementById('lyrics');
+            const loadingIndicator = document.getElementById('loading');
+            const errorContainer = document.getElementById('error');
+            const songInfo = document.getElementById('song-info');
+
+            if (artist && title) {
+                try {
+                    loadingIndicator.style.display = 'block';
+                    errorContainer.textContent = '';
+                    lyricsContainer.textContent = '';
+                    songInfo.style.display = 'none';
+
+                    const response = await axios.get(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
+
+                    loadingIndicator.style.display = 'none';
+
+                    if (response.data.lyrics) {
+                        lyricsContainer.textContent = response.data.lyrics;
+                        document.getElementById('artist-name').textContent = artist;
+                        document.getElementById('song-title').textContent = title;
+                        songInfo.style.display = 'block';
+                    } else {
+                        errorContainer.textContent = "Lyrics not found!";
+                    }
+                } catch (error) {
+                    loadingIndicator.style.display = 'none';
+                    errorContainer.textContent = "Error fetching lyrics. Please try again.";
+                }
+            } else {
+                errorContainer.textContent = "Please enter both artist and song title.";
+            }
+        }
+
+        function copyLyrics() {
+            const lyrics = document.getElementById('lyrics').innerText;
+            if (lyrics) {
+                navigator.clipboard.writeText(lyrics).then(() => {
+                    alert('Lyrics copied to clipboard!');
+                });
+            }
+        }
+
+        function shareLyrics() {
+            const artist = document.getElementById('artist').value;
+            const title = document.getElementById('title').value;
+            const shareText = `Check out the lyrics for "${title}" by ${artist} on LyricsMaster Ultra!`;
+            const shareUrl = window.location.href;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Shared Lyrics',
+                    text: shareText,
+                    url: shareUrl,
+                }).then(() => {
+                    console.log('Shared successfully');
+                }).catch((error) => {
+                    console.error('Error sharing:', error);
+                });
+            } else {
+                alert('Web Share API not supported. You can manually copy and share the URL.');
+            }
+        }
+
+        function playMusic() {
+            const artist = document.getElementById('artist').value;
+            const title = document.getElementById('title').value;
+            window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(artist + ' ' + title)}`, '_blank');
+        }
+
+        function searchAlbum() {
+            const artist = document.getElementById('artist').value;
+            window.open(`https://www.discogs.com/search/?q=${encodeURIComponent(artist)}&type=all`, '_blank');
+        }
+
+        function findConcerts() {
+            const artist = document.getElementById('artist').value;
+            window.open(`https://www.bandsintown.com/${encodeURIComponent(artist)}`, '_blank');
+        }
+    </script>
+</body>
+</html>
