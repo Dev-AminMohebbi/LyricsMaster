@@ -266,7 +266,7 @@
         function shareLyrics() {
             const artist = document.getElementById('artist').value;
             const title = document.getElementById('title').value;
-            const shareText = `Check out the lyrics for "${title}" by ${artist} on LyricsMaster Ultra!`;
+            const shareText = `Check out the lyrics for "${title}" by "${artist}" on LyricsMaster Ultra!`;
             const shareUrl = window.location.href;
 
             if (navigator.share) {
